@@ -1,0 +1,25 @@
+{
+  "name": "Rohan Yadav",
+  "email": "rohanrao2004@gmail.com",
+  "phone": "9467266163 ",
+  "education": [
+    "tech in (A.I and data science) (GPA: 9.20)",
+    "Implemented advanced SQL queries for feature engineering, enabling the extraction of relevant features and attributes"
+  ],
+  "experience_years": null,
+  "skills": [
+    "machine learning",
+    "sql",
+    "numpy",
+    "power bi",
+    "java",
+    "excel",
+    "tableau",
+    "python"
+  ],
+  "projects": [
+    "Projects",
+    "In this machine learning project, we build a recommendation system from the ground up to suggest movies to the user"
+  ],
+  "certifications": null
+}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard | HIRE SMART</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #fdfcfa;
+      color: #2c2417;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .navbar {
+      background-color: #ff6b35;
+    }
+
+    .navbar-brand {
+      font-family: 'Rubik Glitch', cursive;
+      font-size: 32px;
+      color: #fff !important;
+      text-shadow: 2px 2px #d45a2a;
+    }
+
+    .card {
+      border: 2px solid #ff6b35;
+      border-radius: 16px;
+      box-shadow: 4px 4px 0 #ffe0d1, 8px 8px 0 #ffc4a8;
+    }
+
+    .btn-custom {
+      background: #ff6b35;
+      border: 2px solid #ff6b35;
+      box-shadow: 3px 3px 0 #d45a2a;
+      color: white;
+      transition: 0.2s ease;
+    }
+
+    .btn-custom:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 #d45a2a;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">HIRE SMART</a>
+    </div>
+  </nav>
+
+  <div class="container mt-5 mb-5">
+    <h2 class="text-center fw-bold mb-4">Student Dashboard</h2>
+
+    <div class="card p-4 mb-5">
+      <div class="card-header bg-warning text-dark fw-bold text-center">Upload Resume</div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Your Name</label>
+            <input type="text" name="student_name" class="form-control" placeholder="e.g. Rohan Yadav" required>
+          </div>
+          <input type="file" name="resume" class="form-control mb-3" accept=".pdf" required>
+          <button class="btn btn-custom w-100 fw-semibold">Upload & Parse Resume</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card p-4">
+      <div class="card-header bg-warning text-dark fw-bold text-center">Available Job Opportunities</div>
+      <div class="card-body">
+        {% if jobs %}
+          <div class="row">
+            {% for job in jobs %}
+              <div class="col-md-6 mb-4">
+                <div class="card p-3">
+                  <h5 class="fw-bold text-dark">{{ job.role }}</h5>
+                  <p class="text-muted mb-1"><strong>Company:</strong> {{ job.company }}</p>
+                  <p class="text-muted mb-1"><strong>Openings:</strong> {{ job.positions }}</p>
+                  <p class="text-muted small">{{ job.description }}</p>
+
+                  <form method="POST" action="/apply_job">
+                    <input type="hidden" name="student_name" value="">
+                    <input type="hidden" name="company" value="{{ job.company }}">
+                    <input type="hidden" name="role" value="{{ job.role }}">
+                    <button type="submit" class="btn btn-custom w-100 mt-2">Apply Now</button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-center text-muted">No job listings yet. Recruiters will post soon!</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mt-4">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} text-center">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "Rohan Yadav",
+  "email": "rohan@example.com",
+  "phone": "9876543210\n",
+  "education": [
+    "B.Tech in Computer Science, Delhi University"
+  ],
+  "experience_years": 2,
+  "skills": [
+    "data analysis",
+    "tableau",
+    "power bi",
+    "sql",
+    "python"
+  ],
+  "projects": [
+    "Projects:"
+  ],
+  "certifications": null
+}

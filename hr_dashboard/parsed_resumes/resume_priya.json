@@ -1,0 +1,17 @@
+{
+  "name": "Priya Sharma",
+  "email": "priya@example.com",
+  "phone": "9876501234\n",
+  "education": [
+    "B.E. in Information Technology, Mumbai University",
+    "E-commerce API system, Inventory Management App"
+  ],
+  "experience_years": 3,
+  "skills": [
+    "java"
+  ],
+  "projects": [
+    "Projects:"
+  ],
+  "certifications": null
+}

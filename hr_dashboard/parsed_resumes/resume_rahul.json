@@ -1,0 +1,18 @@
+{
+  "name": "Rahul Mehta",
+  "email": "rahul@example.com",
+  "phone": "9988776655\n",
+  "education": [
+    "M.Tech in AI, IIT Kanpur"
+  ],
+  "experience_years": 5,
+  "skills": [
+    "tensorflow",
+    "python",
+    "machine learning"
+  ],
+  "projects": [
+    "Projects:"
+  ],
+  "certifications": null
+}

@@ -1,0 +1,92 @@
+:root {
+  --primary: #ff6b35;
+  --secondary: #ff8c42;
+  --bg1: #f5f5f0;
+  --bg2: #fdfcfa;
+  --brown: #2c2417;
+  --shadow1: #ffe0d1;
+  --shadow2: #ffc4a8;
+  --border: 2px solid #ff6b35;
+  --rubik: 'Rubik Glitch', sans-serif;
+  --space: 'Space Grotesk', sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, var(--bg1), var(--bg2));
+  color: var(--brown);
+  font-family: var(--space);
+}
+
+/* Logo */
+.logo {
+  font-family: var(--rubik);
+  font-size: 42px;
+  color: var(--primary);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: var(--border);
+  box-shadow: 4px 4px 0 var(--shadow1), 8px 8px 0 var(--shadow2);
+  display: inline-block;
+}
+
+/* Landing logo */
+.logo.small { font-size: 28px; }
+
+/* big landing logo */
+.logo.big {
+  font-size: 72px;
+  animation: glitchShake 1.5s infinite;
+}
+
+@keyframes glitchShake {
+  0% { transform: translate(0,0); text-shadow: none; }
+  25% { transform: translate(-1px,1px); text-shadow: 2px 0 0 rgba(255,140,66,0.12); }
+  50% { transform: translate(1px,-1px); text-shadow: -2px 0 0 rgba(255,140,66,0.12); }
+  100% { transform: translate(0,0); text-shadow: none; }
+}
+
+/* 3D button style */
+.btn-3d {
+  background: var(--primary);
+  color: white;
+  border: 2px solid var(--primary);
+  box-shadow: 3px 3px 0 #d45a2a;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform .12s, box-shadow .12s;
+}
+
+.btn-3d:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #d45a2a; }
+.btn-3d:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #d45a2a; }
+
+/* Cards */
+.card, .candidate-card, .job-card {
+  border: var(--border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 4px 4px 0 var(--shadow1), 8px 8px 0 var(--shadow2);
+  transition: transform .14s, box-shadow .14s;
+}
+.card:hover, .candidate-card:hover, .job-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--shadow2); }
+
+/* Candidate card */
+.candidate-card {
+  padding: 12px;
+  min-height: 150px;
+}
+
+/* Upload style */
+.upload {
+  border: 3px dashed var(--primary);
+  background: var(--bg2);
+  padding: 18px;
+  border-radius: 12px;
+}
+
+/* Table header color */
+.table thead th {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  color: white;
+  font-weight: 700;
+}

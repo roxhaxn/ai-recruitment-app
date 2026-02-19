@@ -1,0 +1,14 @@
+[
+  {
+    "company": "TechNova",
+    "role": "Data Analyst",
+    "positions": 3,
+    "description": "Analyze business data and create insights using SQL, Power BI, and Python."
+  },
+  {
+    "company": "InnovaSoft",
+    "role": "Machine Learning Engineer",
+    "positions": 2,
+    "description": "Build and deploy ML models using TensorFlow, Scikit-learn, and cloud services."
+  }
+]
