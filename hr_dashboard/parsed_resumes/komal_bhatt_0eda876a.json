@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "student_name": "komal bhatt",
+    "target_role": "Any",
+    "highest_education": "Any",
+    "preferred_work_mode": "Any",
+    "uploaded_at": "2026-05-01T09:00:28.529041",
+    "source_pdf": "20260501090028_0eda876a_komal_bhatt_resume.docx.pdf"
+  },
+  "resume": {
+    "name": "Komal Bhatt",
+    "email": "komalbhatt22834@gmail.com",
+    "phone": "9258541079",
+    "experience": 2,
+    "education": [
+      "Not Specified"
+    ],
+    "skills": [
+      "Python"
+    ]
+  }
+}

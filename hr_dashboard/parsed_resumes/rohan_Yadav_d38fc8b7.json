@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "student_name": "rohan Yadav",
+    "student_email": "rohanrao2004@gmail.com",
+    "student_phone": "+919467266163",
+    "target_role": "Data Scientist",
+    "highest_education": "Bachelors",
+    "preferred_work_mode": "Hybrid",
+    "uploaded_at": "2026-05-01T09:09:35.687896",
+    "source_pdf": "20260501090933_d38fc8b7_rohan_resume_final3.pdf"
+  },
+  "resume": {
+    "name": "Rohan Yadav",
+    "email": "rohanrao2004@gmail.com",
+    "phone": "9467266163",
+    "experience": 2,
+    "education": [
+      "Not Specified"
+    ],
+    "skills": [
+      "Mysql",
+      "Python",
+      "Machine Learning",
+      "Github",
+      "Numpy",
+      "Tableau",
+      "Power Bi",
+      "Excel",
+      "Java",
+      "Sql"
+    ]
+  }
+}

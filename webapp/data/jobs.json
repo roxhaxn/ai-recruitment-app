@@ -12,5 +12,20 @@
     "role": "Data Analyst",
     "positions": 5,
     "posted_at": "2025-11-10T12:07:04.109155"
+  },
+  {
+    "id": "1a2e0a80-5cc5-4216-a3f9-29921bb469d7",
+    "company": "google",
+    "role": "Data Scientist",
+    "positions": 1,
+    "seniority": "Intern",
+    "education_level": "Bachelors",
+    "work_mode": "On-site",
+    "employment_type": "Full-time",
+    "required_skills": [
+      "Python"
+    ],
+    "description": "hnenvjsdnikve",
+    "posted_at": "2026-05-01T08:37:57.370340"
   }
 ]

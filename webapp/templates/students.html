@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-user-graduate"></i> Student Portal</h1>
+  <p>Upload your resume and apply for opportunities</p>
+</div>
+
+<div class="two-column">
+  <section class="card card-primary">
+    <div class="card-header">
+      <h2><i class="fas fa-file-upload"></i> Upload Resume</h2>
+      <p class="card-subtitle">PDF only, automatic parsing</p>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="form">
+      <div class="form-group">
+        <label for="name"><i class="fas fa-user"></i> Full Name</label>
+        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email"><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone"><i class="fas fa-phone"></i> Phone</label>
+        <input type="tel" id="phone" name="phone" placeholder="+1-XXX-XXX-XXXX">
+      </div>
+
+      <div class="form-group">
+        <label for="target_role"><i class="fas fa-bullseye"></i> Target Role</label>
+        <select id="target_role" name="target_role">
+          {% for role in role_options %}
+          <option value="{{ role }}">{{ role }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="highest_education"><i class="fas fa-graduation-cap"></i> Highest Education</label>
+        <select id="highest_education" name="highest_education">
+          {% for e in education_options %}
+          <option value="{{ e }}">{{ e }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="preferred_work_mode"><i class="fas fa-map-marker-alt"></i> Preferred Work Mode</label>
+        <select id="preferred_work_mode" name="preferred_work_mode">
+          {% for w in work_mode_options %}
+          <option value="{{ w }}">{{ w }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="resume"><i class="fas fa-file-pdf"></i> Resume (PDF)</label>
+        <div class="file-input-wrapper">
+          <input type="file" id="resume" name="resume" accept=".pdf" required onchange="updateFileName(this)">
+          <label for="resume" class="file-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span id="file-name">Click to choose PDF file or drag & drop</span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        <i class="fas fa-cloud-upload-alt"></i> Upload & Parse Resume
+      </button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-briefcase"></i> Available Jobs</h2>
+      <span class="badge">{{ jobs|length }}</span>
+    </div>
+
+    {% if jobs %}
+      <div class="jobs-list">
+        {% for job in jobs %}
+          <div class="job-card">
+            <div class="job-header">
+              <div>
+                <h3>{{ job.role }}</h3>
+                <span class="company-tag">{{ job.company }}</span>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openApplyModal('{{ job.id }}', '{{ job.role }}', '{{ job.company }}')">
+                <i class="fas fa-paper-plane"></i> Apply
+              </button>
+            </div>
+            <div class="job-meta">
+              <span><i class="fas fa-layer-group"></i> {{ job.seniority }}</span>
+              <span><i class="fas fa-graduation-cap"></i> {{ job.education_level }}</span>
+              <span><i class="fas fa-map-marker-alt"></i> {{ job.work_mode }}</span>
+              <span><i class="fas fa-clock"></i> {{ job.employment_type }}</span>
+            </div>
+            {% if job.description %}
+              <p class="job-desc">{{ job.description[:100] }}...</p>
+            {% endif %}
+            {% if job.required_skills %}
+              <div class="skills-tags">
+                {% for skill in job.required_skills[:3] %}
+                  <span class="skill-tag">{{ skill }}</span>
+                {% endfor %}
+                {% if job.required_skills|length > 3 %}
+                  <span class="skill-tag">+{{ job.required_skills|length - 3 }}</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No jobs posted yet</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Apply Modal -->
+<div id="applyModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeApplyModal()">&times;</span>
+    <h2><i class="fas fa-paper-plane"></i> Apply for Job</h2>
+    
+    <form method="post" action="{{ url_for('apply_job') }}" class="form">
+      <input type="hidden" id="job_id" name="job_id" value="">
+      
+      <div class="form-group">
+        <label for="student_name"><i class="fas fa-user"></i> Your Name</label>
+        <input type="text" id="student_name" name="student_name" placeholder="Enter your name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="cover_letter"><i class="fas fa-pen-fancy"></i> Cover Letter (Optional)</label>
+        <textarea id="cover_letter" name="message" rows="4" placeholder="Tell us why you're interested in this role..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeApplyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Application</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function updateFileName(input) {
+    const label = document.getElementById('file-name');
+    if (input.files && input.files[0]) {
+      label.textContent = input.files[0].name;
+      label.style.color = '#10b981';
+    }
+  }
+
+  function openApplyModal(jobId, role, company) {
+    document.getElementById('job_id').value = jobId;
+    document.getElementById('applyModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeApplyModal() {
+    document.getElementById('applyModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('applyModal');
+    if (event.target === modal) {
+      closeApplyModal();
+    }
+  }
+
+  // Drag and drop
+  const fileInput = document.getElementById('resume');
+  const fileLabel = document.querySelector('.file-label');
+  
+  if (fileLabel) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, () => {
+        fileLabel.style.backgroundColor = 'rgba(37, 99, 235, 0.15)';
+        fileLabel.style.borderColor = '#1e40af';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      fileLabel.addEventListener(eventName, () => {
+        fileLabel.style.backgroundColor = 'rgba(37, 99, 235, 0.05)';
+        fileLabel.style.borderColor = '#2563eb';
+      });
+    });
+
+    fileLabel.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      fileInput.files = files;
+      updateFileName(fileInput);
+    });
+  }
+</script>
+{% endblock %}

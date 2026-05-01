@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{% block title %}HIRE SMART{% endblock %}</title>
+  <title>{{ title or "AI Recruitment Platform" }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     :root{
@@ -28,30 +30,46 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg mb-4" style="background:linear-gradient(90deg,var(--primary),var(--secondary));">
-    <div class="container">
-      <a class="navbar-brand text-white brand" href="{{ url_for('index') }}">HIRE SMART</a>
-      <div>
-        <a class="btn btn-light btn-sm me-2" href="{{ url_for('recruiter') }}">Recruiter</a>
-        <a class="btn btn-light btn-sm" href="{{ url_for('student') }}">Student</a>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-briefcase"></i>
+        <span>AI Recruitment</span>
       </div>
+      <ul class="nav-menu">
+        <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+        <li><a href="{{ url_for('students') }}" class="nav-link">Students</a></li>
+        <li><a href="{{ url_for('recruiters') }}" class="nav-link">Recruiters</a></li>
+      </ul>
     </div>
   </nav>
 
-  <div class="container mb-5">
+  <main class="main-container">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ 'success' if category=='success' else ('warning' if category=='warning' else 'info') }}">{{ message }}</div>
-        {% endfor %}
+        <div class="alerts">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i>
+              <span>{{ message }}</span>
+              <button class="alert-close">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
     {% block content %}{% endblock %}
-  </div>
+  </main>
 
-  <footer class="text-center py-3 text-muted">
-    &copy; {{ 2025 }} HIRE SMART
+  <footer class="footer">
+    <p>&copy; 2026 AI Recruitment Platform. All rights reserved.</p>
   </footer>
+
+  <script>
+    document.querySelectorAll('.alert-close').forEach(btn => {
+      btn.addEventListener('click', e => e.target.parentElement.remove());
+    });
+  </script>
 </body>
 </html>

@@ -1,77 +1,176 @@
 import os
-import pdfplumber
 import re
-import json
+from pathlib import Path
 
-def extract_text_from_pdf(file_path):
-    """Extract full text from a PDF resume."""
+try:
+    import pdfplumber
+except Exception:
+    pdfplumber = None
+
+def _read_pdf_text(pdf_path: str) -> str:
     text = ""
-    with pdfplumber.open(file_path) as pdf:
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    return text.strip()
 
-def parse_resume(file_path):
-    """Parse resume and extract structured data + full text."""
-    text = extract_text_from_pdf(file_path)
-    text_clean = text.lower()
+    # 1) pdfplumber first
+    if pdfplumber is not None:
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                for page in pdf.pages:
+                    text += page.extract_text() or ""
+        except Exception:
+            pass
 
-    # Extract candidate name (first non-empty line assumption)
-    lines = [l.strip() for l in text.split("\n") if l.strip()]
-    name = lines[0] if lines else "Unknown"
+    # 2) fallback to pypdf (lazy import to avoid startup crash)
+    if not text:
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(pdf_path)
+            for page in reader.pages:
+                text += page.extract_text() or ""
+        except Exception:
+            pass
 
-    # Education keywords
-    if "phd" in text_clean:
-        education = "PhD"
-    elif "master" in text_clean or "m.sc" in text_clean:
-        education = "Masters"
-    elif "bachelor" in text_clean or "b.tech" in text_clean or "b.sc" in text_clean:
-        education = "Bachelors"
-    elif "diploma" in text_clean:
-        education = "Diploma"
-    else:
-        education = ""
+    return text
 
+def parse_resume(pdf_path: str) -> dict:
+    if not Path(pdf_path).exists():
+        return {"error": "File not found"}
+
+    text = _read_pdf_text(pdf_path)
+    if not text.strip():
+        return {
+            "name": "Unknown Candidate",
+            "email": "",
+            "phone": "",
+            "experience": 0,
+            "education": ["Not Specified"],
+            "skills": []
+        }
+
+    return _extract_fields(text)
+
+
+def _extract_fields(text: str) -> dict:
+    """Extract structured fields from resume text."""
+    
+    # Name extraction (first line or common pattern)
+    name = _extract_name(text)
+    
+    # Email extraction
+    email = _extract_email(text)
+    
+    # Phone extraction
+    phone = _extract_phone(text)
+    
     # Experience extraction
-    exp_match = re.search(r'(\d+)\s*(?:year|yr)', text_clean)
-    experience = exp_match.group(1) if exp_match else "0"
-
-    # Skills (basic comma/keyword detection)
-    skills_section = re.findall(r'skills[:\-–]?(.*)', text, re.IGNORECASE)
-    skills = skills_section[0] if skills_section else ""
-    skills = skills.strip() or "Not specified"
-
-    # Projects (optional)
-    proj_section = re.findall(r'project[s]?:?(.*)', text, re.IGNORECASE)
-    projects = proj_section[0] if proj_section else ""
-
-    parsed_data = {
+    experience = _extract_experience(text)
+    
+    # Education extraction
+    education = _extract_education(text)
+    
+    # Skills extraction
+    skills = _extract_skills(text)
+    
+    return {
         "name": name,
-        "education": education,
+        "email": email,
+        "phone": phone,
         "experience": experience,
+        "education": education,
         "skills": skills,
-        "projects": projects,
-        "text": text  # 🔥 full resume text for semantic similarity
     }
 
-    return parsed_data
+
+def _extract_name(text: str) -> str:
+    """Extract candidate name from resume."""
+    lines = text.split('\n')
+    for line in lines[:5]:  # Check first 5 lines
+        line = line.strip()
+        if line and len(line) < 50 and not any(c.isdigit() for c in line):
+            return line
+    return "Candidate"
 
 
-def parse_all_resumes(input_folder, output_folder):
-    """Parse all PDF resumes and save as JSONs."""
-    os.makedirs(output_folder, exist_ok=True)
-    parsed_results = []
+def _extract_email(text: str) -> str:
+    """Extract email address."""
+    emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    return emails[0] if emails else ""
 
-    for file in os.listdir(input_folder):
-        if file.endswith(".pdf"):
-            file_path = os.path.join(input_folder, file)
-            parsed = parse_resume(file_path)
-            output_file = os.path.join(output_folder, file.replace(".pdf", ".json"))
 
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(parsed, f, indent=4)
+def _extract_phone(text: str) -> str:
+    """Extract phone number."""
+    phones = re.findall(r'[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}', text)
+    return phones[0] if phones else ""
 
-            parsed_results.append(parsed)
-            print(f"✅ Parsed {file}")
 
-    return parsed_results
+def _extract_experience(text: str) -> int:
+    """Extract years of experience."""
+    text_lower = text.lower()
+    
+    # Look for patterns like "X years of experience"
+    exp_patterns = [
+        r'(\d+)\s*\+?\s*years?\s+(?:of\s+)?experience',
+        r'experience:\s*(\d+)\s*years?',
+        r'(\d+)\s*years?\s+in\s+',
+    ]
+    
+    for pattern in exp_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            return int(match.group(1))
+    
+    # Count job entries as proxy for experience
+    job_keywords = ['experience', 'employment', 'work history']
+    if any(kw in text_lower for kw in job_keywords):
+        return 2  # Default to 2 years if work section exists
+    
+    return 0
+
+
+def _extract_education(text: str) -> list:
+    """Extract education qualifications."""
+    education = []
+    text_lower = text.lower()
+    
+    degrees = {
+        'phd': r'\b(phd|ph\.d|doctorate)\b',
+        'masters': r'\b(masters?|m\.tech|mba|m\.s|msc|m\.sc)\b',
+        'bachelors': r'\b(bachelor|b\.tech|bsc|b\.sc|ba|bs|engineering)\b',
+        'diploma': r'\b(diploma|associate)\b',
+    }
+    
+    for degree_name, pattern in degrees.items():
+        if re.search(pattern, text_lower):
+            education.append(degree_name.title())
+    
+    return education if education else ['Not Specified']
+
+
+def _extract_skills(text: str) -> list:
+    """Extract technical and professional skills."""
+    text_lower = text.lower()
+    
+    common_skills = [
+        'python', 'java', 'javascript', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'kotlin',
+        'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'cassandra', 'dynamodb',
+        'html', 'css', 'react', 'angular', 'vue', 'nodejs', 'express', 'django', 'flask', 'spring',
+        'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'gitlab', 'github',
+        'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn', 'keras',
+        'pandas', 'numpy', 'scipy', 'matplotlib', 'seaborn', 'plotly',
+        'power bi', 'tableau', 'excel', 'sheets',
+        'git', 'rest api', 'graphql', 'microservices', 'agile', 'scrum',
+        'linux', 'windows', 'macos', 'bash', 'shell', 'json', 'xml', 'yaml',
+    ]
+    
+    found_skills = []
+    for skill in common_skills:
+        if re.search(r'\b' + re.escape(skill) + r'\b', text_lower):
+            found_skills.append(skill.title())
+    
+    return list(set(found_skills)) if found_skills else ['Not Specified']
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        result = parse_resume(sys.argv[1])
+        print(json.dumps(result, indent=2))

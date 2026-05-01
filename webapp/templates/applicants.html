@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-users"></i> Applicants for {{ job.role }}</h1>
+  <p>{{ job.company }} • {{ applicants|length }} Application(s)</p>
+  <a href="{{ url_for('recruiters') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<section class="card">
+  <div class="job-summary">
+    <div class="summary-item">
+      <strong>Company:</strong> {{ job.company }}
+    </div>
+    <div class="summary-item">
+      <strong>Role:</strong> {{ job.role }}
+    </div>
+    <div class="summary-item">
+      <strong>Positions:</strong> {{ job.positions }}
+    </div>
+    <div class="summary-item">
+      <strong>Seniority:</strong> {{ job.seniority }}
+    </div>
+  </div>
+</section>
+
+{% if applicants %}
+  <div class="applicants-list">
+    {% for app in applicants %}
+      <section class="card applicant-card">
+        <div class="applicant-header">
+          <div class="applicant-info">
+            <h3>{{ app.student_name }}</h3>
+            <div class="applicant-contact">
+              <span><i class="fas fa-envelope"></i> <a href="mailto:{{ app.email }}">{{ app.email }}</a></span>
+              <span><i class="fas fa-phone"></i> <a href="tel:{{ app.phone }}">{{ app.phone }}</a></span>
+            </div>
+          </div>
+          <div class="applicant-status">
+            <span class="status-badge status-{{ app.status|lower }}">{{ app.status }}</span>
+          </div>
+        </div>
+
+        {% if app.message %}
+          <div class="applicant-message">
+            <h4>Cover Letter</h4>
+            <p>{{ app.message }}</p>
+          </div>
+        {% endif %}
+
+        <div class="applicant-meta">
+          <small><i class="fas fa-calendar"></i> Applied: {{ app.applied_at|default('Recently') }}</small>
+        </div>
+
+        <div class="applicant-actions">
+          <form method="post" action="{{ url_for('update_application_status') }}" style="display: inline;">
+            <input type="hidden" name="app_id" value="{{ app.id }}">
+            
+            {% if app.status != "Interview" %}
+              <button type="submit" name="status" value="Interview" class="btn btn-primary btn-sm">
+                <i class="fas fa-calendar-check"></i> Schedule Interview
+              </button>
+            {% endif %}
+            
+            {% if app.status != "Accepted" %}
+              <button type="submit" name="status" value="Accepted" class="btn btn-success btn-sm">
+                <i class="fas fa-check"></i> Accept
+              </button>
+            {% endif %}
+            
+            {% if app.status != "Rejected" %}
+              <button type="submit" name="status" value="Rejected" class="btn btn-danger btn-sm">
+                <i class="fas fa-times"></i> Reject
+              </button>
+            {% endif %}
+          </form>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state" style="margin-top: 40px;">
+    <i class="fas fa-inbox"></i>
+    <p>No applicants yet</p>
+  </div>
+{% endif %}
+{% endblock %}

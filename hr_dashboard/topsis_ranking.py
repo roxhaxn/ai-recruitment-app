@@ -1,54 +1,90 @@
+import re
 import pandas as pd
-import numpy as np
-from sentence_transformers import SentenceTransformer, util
 
-# Load lightweight embedding model once
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
-def compute_semantic_similarity(job_description, resumes_text):
-    """Compute cosine similarity between job description and resumes."""
-    job_emb = model.encode(job_description, convert_to_tensor=True)
-    resume_embs = model.encode(resumes_text, convert_to_tensor=True)
-    sims = util.cos_sim(job_emb, resume_embs)[0].cpu().numpy()
-    return sims  # list of similarity scores
+def _num(val):
+    if val is None:
+        return 0
+    m = re.search(r"\d+", str(val))
+    return int(m.group()) if m else 0
 
-def topsis(df, weights, job_description=None):
-    """Apply TOPSIS ranking with optional semantic similarity."""
-    edu_map = {"phd": 4, "masters": 3, "bachelors": 2, "diploma": 1, "": 0}
 
-    df_numeric = pd.DataFrame()
-    df_numeric["name"] = df["name"]
-    df_numeric["experience"] = df["experience"].apply(lambda x: int(x) if str(x).isdigit() else 0)
-    df_numeric["education"] = df["education"].apply(lambda x: edu_map.get(str(x).lower(), 0))
-    df_numeric["skills"] = df["skills"].apply(lambda x: len(str(x).split(",")) if isinstance(x, str) else 0)
+def _education_score(val):
+    s = str(val or "").lower()
+    if "phd" in s or "doctor" in s:
+        return 4
+    if "master" in s or "mba" in s or "msc" in s or "m.tech" in s:
+        return 3
+    if "bachelor" in s or "b.tech" in s or "bsc" in s or "ba" in s:
+        return 2
+    if "diploma" in s:
+        return 1
+    return 0
 
-    criteria = ["experience", "education", "skills"]
 
-    # Add semantic fit
-    if job_description:
-        df_numeric["semantic_fit"] = compute_semantic_similarity(job_description, df["text"].tolist())
-        criteria.append("semantic_fit")
+def _skills_score(val):
+    if isinstance(val, list):
+        return len([x for x in val if str(x).strip()])
+    s = str(val or "")
+    if not s.strip():
+        return 0
+    return len([x for x in s.split(",") if x.strip()])
 
-    # Normalize
-    matrix = df_numeric[criteria].to_numpy(dtype=float)
-    norm = np.linalg.norm(matrix, axis=0)
-    norm_matrix = matrix / norm
 
-    # Apply weights
-    weight_vector = np.array([weights[c] for c in criteria])
-    weighted_matrix = norm_matrix * weight_vector
+def _semantic_fit(text, job_description):
+    if not job_description:
+        return 0.0
+    a = set(re.findall(r"[a-zA-Z]+", str(text or "").lower()))
+    b = set(re.findall(r"[a-zA-Z]+", str(job_description or "").lower()))
+    if not a or not b:
+        return 0.0
+    return len(a & b) / max(1, len(b))
 
-    # Ideal best/worst
-    ideal_best = np.max(weighted_matrix, axis=0)
-    ideal_worst = np.min(weighted_matrix, axis=0)
 
-    # Distances
-    dist_best = np.linalg.norm(weighted_matrix - ideal_best, axis=1)
-    dist_worst = np.linalg.norm(weighted_matrix - ideal_worst, axis=1)
+def _minmax(series):
+    if series.max() == series.min():
+        return series * 0
+    return (series - series.min()) / (series.max() - series.min())
 
-    # Score
-    score = dist_worst / (dist_best + dist_worst)
-    df_numeric["score"] = score
 
-    ranked_df = df_numeric.sort_values(by="score", ascending=False).reset_index(drop=True)
-    return ranked_df
+def topsis(df, weights=None, job_description=""):
+    df = df.copy()
+
+    for col in ["name", "experience", "education", "skills"]:
+        if col not in df.columns:
+            df[col] = "" if col != "experience" else 0
+
+    df["experience"] = df["experience"].apply(_num)
+    df["education_score"] = df["education"].apply(_education_score)
+    df["skills_score"] = df["skills"].apply(_skills_score)
+    df["semantic_fit"] = df.apply(
+        lambda r: _semantic_fit(f"{r['name']} {r['education']} {r['skills']} {r['experience']}", job_description),
+        axis=1,
+    )
+
+    weights = weights or {}
+    w_exp = float(weights.get("experience", 0.35))
+    w_edu = float(weights.get("education", 0.25))
+    w_skills = float(weights.get("skills", 0.40))
+    w_sem = float(weights.get("semantic_fit", 0.0))
+
+    total = w_exp + w_edu + w_skills + w_sem
+    if total <= 0:
+        w_exp, w_edu, w_skills, w_sem = 0.35, 0.25, 0.40, 0.0
+        total = 1.0
+
+    w_exp /= total
+    w_edu /= total
+    w_skills /= total
+    w_sem /= total
+
+    df["score"] = (
+        _minmax(df["experience"]) * w_exp
+        + _minmax(df["education_score"]) * w_edu
+        + _minmax(df["skills_score"]) * w_skills
+        + _minmax(df["semantic_fit"]) * w_sem
+    )
+
+    df = df.sort_values("score", ascending=False).reset_index(drop=True)
+    df["rank"] = range(1, len(df) + 1)
+    return df
